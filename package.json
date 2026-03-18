@@ -1,0 +1,28 @@
+{
+  "name": "paperclip-cli",
+  "version": "0.1.0",
+  "description": "CLI for the Paperclip agent platform",
+  "type": "module",
+  "bin": {
+    "paperclip": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "bun build src/cli.ts --outdir dist --target node --format esm",
+    "dev": "bun run src/cli.ts",
+    "test": "bun test"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": ["paperclip", "agents", "cli", "project-management"],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "commander": "^14.0.3"
+  }
+}
