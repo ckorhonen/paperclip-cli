@@ -6,6 +6,7 @@ import {
   formatGoals,
   formatProjects,
   formatComments,
+  formatStatus,
 } from "../src/format";
 
 describe("formatIssues", () => {
@@ -118,6 +119,42 @@ describe("formatProjects", () => {
     ];
     const result = formatProjects(projects);
     expect(result).toBe("MyApp [in_progress] — An app");
+  });
+});
+
+describe("formatStatus", () => {
+  test("shows issue counts and agent summary", () => {
+    const data = {
+      issues: [
+        { identifier: "SOU-1", title: "A", status: "todo", priority: "high", createdAt: "", updatedAt: "" },
+        { identifier: "SOU-2", title: "B", status: "todo", priority: "medium", createdAt: "", updatedAt: "" },
+        { identifier: "SOU-3", title: "C", status: "in_progress", priority: "high", createdAt: "", updatedAt: "" },
+        { identifier: "SOU-4", title: "D", status: "blocked", priority: "critical", createdAt: "", updatedAt: "" },
+      ],
+      agents: [
+        { id: "a1", name: "Eng", role: "engineer", title: "Eng", status: "active" },
+        { id: "a2", name: "CTO", role: "cto", title: "CTO", status: "idle" },
+      ],
+    };
+    const result = formatStatus(data);
+    expect(result).toContain("todo: 2");
+    expect(result).toContain("in_progress: 1");
+    expect(result).toContain("blocked: 1");
+    expect(result).toContain("1 active, 1 idle, 2 total");
+    expect(result).toContain("Blocked (1):");
+    expect(result).toContain("SOU-4 D");
+  });
+
+  test("shows in-review issues", () => {
+    const data = {
+      issues: [
+        { identifier: "SOU-5", title: "PR ready", status: "in_review", priority: "medium", createdAt: "", updatedAt: "" },
+      ],
+      agents: [],
+    };
+    const result = formatStatus(data);
+    expect(result).toContain("In Review (1):");
+    expect(result).toContain("SOU-5 PR ready");
   });
 });
 

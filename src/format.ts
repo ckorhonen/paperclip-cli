@@ -106,6 +106,55 @@ export function formatProjects(projects: Project[]): string {
     .join("\n");
 }
 
+interface StatusSummary {
+  issues: Issue[];
+  agents: Agent[];
+}
+
+export function formatStatus(data: StatusSummary): string {
+  const { issues, agents } = data;
+  const lines: string[] = [];
+
+  // Issue counts by status
+  const statusCounts: Record<string, number> = {};
+  for (const i of issues) {
+    statusCounts[i.status] = (statusCounts[i.status] || 0) + 1;
+  }
+  lines.push("Issues:");
+  for (const [s, c] of Object.entries(statusCounts).sort()) {
+    lines.push(`  ${s}: ${c}`);
+  }
+
+  // Active agents
+  const activeAgents = agents.filter(
+    (a) => a.status === "active" || a.status === "running"
+  );
+  const idleAgents = agents.filter((a) => a.status === "idle");
+  lines.push(
+    `\nAgents: ${activeAgents.length} active, ${idleAgents.length} idle, ${agents.length} total`
+  );
+
+  // Blocked issues (important to surface)
+  const blocked = issues.filter((i) => i.status === "blocked");
+  if (blocked.length > 0) {
+    lines.push(`\nBlocked (${blocked.length}):`);
+    for (const b of blocked) {
+      lines.push(`  ${b.identifier} ${b.title}`);
+    }
+  }
+
+  // In-review issues
+  const inReview = issues.filter((i) => i.status === "in_review");
+  if (inReview.length > 0) {
+    lines.push(`\nIn Review (${inReview.length}):`);
+    for (const r of inReview) {
+      lines.push(`  ${r.identifier} ${r.title}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
 export function formatComments(comments: Comment[]): string {
   if (comments.length === 0) return "No comments.";
   return comments

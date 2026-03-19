@@ -9,6 +9,7 @@ import {
   formatGoals,
   formatProjects,
   formatComments,
+  formatStatus,
 } from "./format.js";
 
 const program = new Command();
@@ -26,6 +27,29 @@ function output(data: unknown, formatter: (d: any) => string, json: boolean) {
     console.log(formatter(data));
   }
 }
+
+// --- Status ---
+
+program
+  .command("status")
+  .description("Company status dashboard")
+  .option("--json", "Output raw JSON")
+  .action(async (opts) => {
+    const config = getConfig();
+    const [issues, agents] = await Promise.all([
+      apiGet(config, `/api/companies/${config.companyId}/issues`) as Promise<
+        any[]
+      >,
+      apiGet(config, `/api/companies/${config.companyId}/agents`) as Promise<
+        any[]
+      >,
+    ]);
+    // Exclude done/cancelled from dashboard
+    const active = issues.filter(
+      (i) => !["done", "cancelled"].includes(i.status)
+    );
+    output({ issues: active, agents }, formatStatus, opts.json);
+  });
 
 // --- Issues ---
 
@@ -225,8 +249,34 @@ program
     }
     const result = await apiPost(config, `/api/issues/${issue.id}/checkout`, {
       agentId: opts.agent,
-      expectedStatuses: ["todo", "in_progress"],
+      expectedStatuses: ["todo", "in_progress", "blocked"],
     });
+    output(result, formatIssue, opts.json);
+  });
+
+program
+  .command("release <identifier>")
+  .description("Release execution lock on an issue")
+  .option("--status <status>", "Set status after release (e.g. done, blocked)")
+  .option("--json", "Output raw JSON")
+  .action(async (identifier: string, opts) => {
+    const config = getConfig();
+    const issues = (await apiGet(
+      config,
+      `/api/companies/${config.companyId}/issues`
+    )) as any[];
+    const issue = issues.find(
+      (i) => i.identifier === identifier.toUpperCase()
+    );
+    if (!issue) {
+      console.error(`Issue ${identifier} not found.`);
+      process.exit(1);
+    }
+    const result = await apiPost(
+      config,
+      `/api/issues/${issue.id}/release`,
+      opts.status ? { status: opts.status } : {}
+    );
     output(result, formatIssue, opts.json);
   });
 
