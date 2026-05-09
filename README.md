@@ -69,3 +69,7 @@ bun run dev -- issues          # Run locally
 bun test                       # Run tests
 bun run build                  # Build for npm
 ```
+
+## Agent Workflow
+
+See `AGENTS.md` for repository-specific agent guidance and the `.agents/` layout.
